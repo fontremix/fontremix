@@ -1,4 +1,4 @@
-//9/17/25
+//2.0 Launch 9/20/25
 
 const localFonts = [
 "ABeeZee-Regular.ttf",
@@ -1588,3 +1588,4 @@ if (font.tables && font.tables.os2) {
 // Inject font and show preview at load
 injectFontFace(fontPicker.value);
 document.addEventListener('DOMContentLoaded', updatePreview);
+
