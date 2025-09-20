@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FontRemix SVG Preview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+  <style>
+    :root{
+      --bg1:#0d132a;
+      --bg2:#151c3f;
+      --card:#0f1a3e;
+      --card2:#0d1635;
+      --ink:#e9eeff;
+      --muted:#a7b6ff;
+      --primary:#6aa8ff;
+      --accent:#47def6;
+      --edge:#23306a;
+      --edge2:#1a2557;
+      --field:#0e1534;
+      --field-edge:#2a3b88;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 480px at 15% 0%,#1b2b71 0%,transparent 60%),
+        radial-gradient(900px 480px at 85% 0%,#124b7a66 0%,transparent 60%),
+        linear-gradient(160deg,var(--bg1),var(--bg2));
+      padding:12px;
+      overflow:hidden
+    }
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 12px;border-radius:12px;
+      background:linear-gradient(180deg,#0e1849,#0e163f);
+      border:1px solid var(--edge);box-shadow:0 8px 24px #00000033;
+      margin:0 auto 10px auto;max-width:1720px;height:54px
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo-img{height:90px;filter:brightness(0) invert(1)}
+    .brand .sub{font-size:12px;color:var(--muted)}
+    .header-actions{display:flex;gap:8px;align-items:center;position:relative}
+    .pill{padding:7px 12px;border-radius:999px;border:1px solid #3650aa;background:#0f1846;color:var(--ink);cursor:pointer;font-weight:700}
+    .support-link{color:var(--muted);text-decoration:none;font-weight:700}
+    .support-link:hover{color:var(--accent)}
+    /* FAQ dropdown (inline, not modal) */
+    .faq-inline{position:relative}
+    .faq-inline summary{list-style:none}
+    .faq-inline summary::-webkit-details-marker{display:none}
+    .faq-inline summary.pill{user-select:none}
+    .faq-pop{
+      position:absolute; right:0; top:calc(100% + 8px);
+      width:min(720px,90vw); max-height:70vh; overflow:auto;
+      background:var(--card); border:1px solid var(--edge); border-radius:12px;
+      box-shadow:0 18px 36px #00000066; padding:14px; z-index:60;
+    }
+    .faq-pop h2{margin:0 0 10px 0;color:var(--accent);font-size:1.05rem}
+    .faq-pop h3{margin:10px 0 6px 0;color:var(--muted);font-size:.98rem}
+    .faq-pop p{margin:6px 0 8px 0;color:#dfe6ff}
+    .faq-pop ol,.faq-pop ul{margin:6px 0 10px 18px}
+
+    .container{
+      display:grid;grid-template-columns:360px 1fr;gap:12px;align-items:start;
+      max-width:1720px;margin:0 auto;height:calc(100vh - 54px - 18px)
+    }
+    .card{background:linear-gradient(180deg,var(--card),#0e163b);border:1px solid var(--edge);border-radius:12px;box-shadow:0 10px 22px #00000033}
+    .card2{background:linear-gradient(180deg,var(--card2),#0d1432);border:1px solid var(--edge);border-radius:12px;box-shadow:0 10px 22px #00000033}
+
+    .left-col{display:grid;grid-auto-rows:min-content;gap:8px;height:100%}
+    .control-group{padding:8px 10px}
+    label{display:block;margin-bottom:4px;color:var(--muted);font-weight:700;font-size:.95rem}
+    input[type="text"],select{width:100%;font-size:.95rem;color:var(--ink);background:var(--field);border:1px solid var(--field-edge);border-radius:8px;padding:7px 9px;outline:none;box-shadow:inset 0 0 0 1px #00000033}
+    input[type="text"]::placeholder{color:#99a8ff}
+    #previewText{max-width:240px}
+
+    .right-col{display:grid;grid-template-rows:auto auto;align-content:start;gap:8px;height:100%;min-height:0}
+    #previewCard{padding:10px;display:grid;grid-template-rows:auto auto auto;row-gap:6px}
+    #previewContainer{width:100%;height:210px;border:1px solid #2b3d93;border-radius:10px;background:#ffffff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 10px #00000026;margin:0 auto}
+    #previewSVG{display:block;width:100%;height:210px}
+    .preview-tip{text-align:center;font-size:12px;color:#b9c6ff;font-weight:700;margin:6px 0}
+
+    .download-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .custom-name-label{font-size:.9rem;color:var(--muted);font-weight:800}
+    .custom-name-input{max-width:240px}
+    #downloadBtn{padding:8px 14px;font-size:.95rem;border-radius:9px;border:1px solid #4a6bff;background:linear-gradient(180deg,#5e84ff,#4a70ff);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 6px 16px #2140ff33}
+    #downloadBtn:disabled{opacity:.55;cursor:not-allowed}
+
+    #effectsCard{padding:10px;display:grid;grid-template-rows:auto auto;row-gap:8px}
+    .effects-title{text-align:center;font-weight:800;font-size:.95rem;color:var(--accent)}
+    .effects-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end}
+    .eff{background:#0f173c;border:1px solid #2a3b88;border-radius:8px;padding:6px 8px}
+    .eff label{margin:0 0 4px 0;font-size:.85rem}
+    .eff input[type="range"]{width:100%;accent-color:var(--primary);margin:0;background:transparent}
+
+    .toggle-item{display:flex;align-items:center;justify-content:space-between;background:#0f173c;border:1px solid #2a3b88;border-radius:8px;padding:6px 8px}
+    .toggle-label{font-size:.9rem;color:var(--muted)}
+    .switch{position:relative;display:inline-block;width:44px;height:22px}
+    .switch input{display:none}
+    .slider{position:absolute;inset:0;cursor:pointer;border-radius:20px;background:#1b2863;transition:.2s;box-shadow:inset 0 0 10px #00000055}
+    .slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 8px #00000066}
+    input:checked+.slider{background:linear-gradient(90deg,#5f8aff,#3ad8ff)}
+    input:checked+.slider:before{transform:translateX(22px)}
+
+    .reset-wrap{display:flex;justify-content:center}
+    .reset-btn{padding:7px 12px;border-radius:9px;border:1px solid #2b3d93;background:#0e1536;color:var(--ink);font-weight:700;cursor:pointer}
+
+    .footer{max-width:1720px;margin:8px auto 0 auto;padding:4px 2px 0 2px;color:#9fb2ff;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-top:1px solid var(--edge);height:16px}
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <img class="logo-img" src="https://i.ibb.co/HDYdVNvG/logo-png.png" alt="FontRemix logo">
+    </div>
+    <div class="header-actions">
+      <button class="pill" id="randomBtn">Random Font</button>
+
+      <details class="faq-inline">
+        <summary class="pill">FAQ</summary>
+        <div class="faq-pop">
+          <h2>Quick Guide</h2>
+          <ol>
+            <li>Choose a category or pick a font from the list</li>
+            <li>Type your preview text</li>
+            <li>Adjust sliders and toggles</li>
+            <li>Enter a file name</li>
+            <li>Click <b>"Download Font"</b></li>
+          </ol>
+
+          <h3>Why some features are limited</h3>
+          <ul>
+            <li>Extreme transforms can distort outlines or spacing</li>
+            <li>Monospace forces equal widths (can change rhythm)</li>
+            <li>Flip/invert can stress hinting in some families</li>
+            <li>Height extends beyond ttf boundaries at certain values</li>
+            <li>Limits keep TTFs reliable across apps</li>
+          </ul>
+
+          <h3>Why these fonts are free</h3>
+          <p>Google Fonts hosts open-licensed families (often SIL Open Font License or Apache 2.0). These allow personal/commercial use and modification. These fonts and any modifications you make to them are <b>100% free-to-use :)</b></p>
+
+          <p style="margin-top:12px">Support: <a class="support-link" href="mailto:fontremixhelp@gmail.com">fontremixhelp@gmail.com</a></p>
+        </div>
+      </details>
+
+      Need help or found a bug? ➤ <a class="support-link" href="mailto:fontremixhelp@gmail.com"><b>fontremixhelp@gmail.com</b></a>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="left-col">
+      <div class="card control-group">
+        <label for="fontSearch">Search fonts</label>
+        <input id="fontSearch" placeholder="Search fonts...">
+      </div>
+      <div class="card control-group">
+        <label for="fontCategory">Browse by category</label>
+        <select id="fontCategory">
+          <option value="All">All</option>
+          <option value="Sans">Sans</option>
+          <option value="Serif">Serif</option>
+          <option value="Slab">Slab serif</option>
+          <option value="Mono">Mono code</option>
+          <option value="Display">Display headline</option>
+          <option value="Handwriting">Handwritten</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="card control-group">
+        <label for="fontPicker">Choose one of 1000+ fonts from the list below</label>
+        <select id="fontPicker"></select>
+      </div>
+      <div class="card control-group">
+        <label for="previewText">Preview Text</label>
+        <input type="text" id="previewText" value="Try typing with your font!">
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div id="previewCard" class="card2">
+        <div id="previewContainer">
+          <svg id="previewSVG" width="100%" height="210"></svg>
+        </div>
+        <div class="preview-tip">⬆ What you see in this preview above is what your downloaded font will look like ⬆</div>
+        <div class="download-row">
+          <label class="custom-name-label" for="fontFileName">Font File Name</label>
+          <input class="custom-name-input" id="fontFileName" type="text" value="CustomFont">
+          <button id="downloadBtn">Download Font</button>
+        </div>
+      </div>
+
+      <div id="effectsCard" class="card">
+        <div class="effects-title">Effects</div>
+        <div class="effects-grid">
+          <div class="eff">
+            <label for="slantSlider">Slant <span id="slantValue">0</span></label>
+            <input type="range" id="slantSlider" min="-70" max="70" value="0" step="1">
+          </div>
+          <div class="eff">
+            <label for="widthSlider">Width <span id="widthValue">0</span></label>
+            <input type="range" id="widthSlider" min="-6" max="6" value="0" step="1">
+          </div>
+          <div class="eff">
+            <label for="heightSlider">Height <span id="heightValue">0</span></label>
+            <input type="range" id="heightSlider" min="-6" max="6" value="0" step="1">
+          </div>
+          <div class="eff">
+            <label for="spacingSlider">Letter Spacing <span id="spacingValue">0</span></label>
+            <input type="range" id="spacingSlider" min="0" max="20" value="0" step="1">
+          </div>
+          <div class="toggle-item">
+            <span class="toggle-label">Monospace</span>
+            <label class="switch"><input type="checkbox" id="monospaceToggle"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-item">
+            <span class="toggle-label">Vertical Flip</span>
+            <label class="switch"><input type="checkbox" id="verticalFlipToggle"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-item">
+            <span class="toggle-label">Invert Letters</span>
+            <label class="switch"><input type="checkbox" id="invertToggle"><span class="slider"></span></label>
+          </div>
+          <div class="reset-wrap">
+            <button id="resetBtn" class="reset-btn">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div>Made with FontRemix</div>
+    <div>Support <a href="mailto:fontremixhelp@gmail.com">fontremixhelp@gmail.com</a></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
